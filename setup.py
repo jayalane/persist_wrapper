@@ -7,10 +7,10 @@ import os
 from setuptools import setup, find_packages
 
 
-NAME = 'Chris Lane'
+NAME = 'persist-wrapper'
 AUTHOR = 'Chris Lane'
 AUTHOR_EMAIL = 'chris@lane-jayasinha.com'
-URL = 'https://github.com/lanstin/wrapper'
+URL = 'https://github.com/lanstin/persist-wrapper'
 
 if __name__ == '__main__':
     VERSION = "0.0.1"
