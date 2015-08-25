@@ -13,7 +13,7 @@ AUTHOR_EMAIL = 'chris@lane-jayasinha.com'
 URL = 'https://github.com/lanstin/wrapper'
 
 if __name__ == '__main__':
-    VERSION = 0.0.1
+    VERSION = "0.0.1"
     setup(name=NAME,
           version=VERSION,
           author=AUTHOR,
