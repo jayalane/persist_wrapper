@@ -24,4 +24,4 @@ if __name__ == '__main__':
               'Development Status :: 3 - Alpha',
               'License :: OSI Approved :: BSD License',
           ],
-          packages=['date-data-cache'])
+          packages=['date_data_cache'])
