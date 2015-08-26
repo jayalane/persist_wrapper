@@ -19,5 +19,9 @@ if __name__ == '__main__':
           author=AUTHOR,
           author_email=AUTHOR_EMAIL,
           url=URL,
-          packages=find_packages(exclude=('test', 'test.*')),
-          include_package_data=True)
+          license = "BSD",
+          classifiers = [
+              'Development Status :: 3 - Alpha',
+              'License :: OSI Approved :: BSD License',
+          ],
+          packages=['persist-wrapper'])

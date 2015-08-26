@@ -8,6 +8,7 @@ from collections import MutableMapping
 import sqlite3
 import cPickle
 import json
+import zlib
 
 import threading
 import cache
@@ -25,6 +26,7 @@ class PersistentDict(MutableMapping):
         if iterable is not None:
             self.update(iterable)
         self.mem_dict = cache.LRUCache(maxlen=1000000)
+        self.mem_dict = {}
         self.update(kwargs)
 
     def encode(self, obj):
@@ -32,10 +34,19 @@ class PersistentDict(MutableMapping):
             rv = json.dumps(obj)
         except TypeError as e:
             rv = cPickle.dumps(obj)
-        
+        old_rv = rv
+        try:
+            rv = zlib.compress(rv)
+        except:
+            rv = old_rv
         return rv
 
     def decode(self, blob):
+        old_blob = blob
+        try:
+            blob = zlib.decompress(str(blob))
+        except:
+            blob = old_blob
         try:
             rv = json.loads(str(blob))
         except:
@@ -108,3 +119,8 @@ class PersistentDict(MutableMapping):
             cursor = connection.cursor()
             cursor.execute('select count(*) from memo')
             return cursor.fetchone()[0]
+
+    def compress(self, key):
+        v = self.__getitem__(key)
+        del self.mem_dict[key]
+        self.__setitem__(key, v)
