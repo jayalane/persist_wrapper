@@ -18,7 +18,11 @@ def memo(method):
         str_args = method.__name__ + '-' + '-'.join(args) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
         try:
         # try to get the cached result
-            return stored_results[str_args]
+            res = stored_results[str_args]
+            # dangerous
+            if "<Response [404]>" in str(res):
+                raise KeyError('synthetic')
+            return res
         except KeyError:
         # nothing was cached for those args. let's fix that.
             result = stored_results[str_args] = method(*args, **kw)
