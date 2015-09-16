@@ -30,7 +30,6 @@ def get_fields(connection, tb_name):
     right_paren = sql.rfind(")")
     fields = [g.split(' ')[0] for g in [f.strip(' ') for f in sql[left_paren + 1:right_paren + 1].split(",")[0:-1] ]]
     return fields
-    
 
 class PersistentData(object):
     def __init__(self, name):
@@ -46,6 +45,7 @@ class PersistentData(object):
         cursor.execute('create table if not exists app_host_data '
                        '(key_1 text not null, key_2 text not null, date_string text, primary key (key_1, key_2, date_string))')
         self.db_names_2 = get_fields(connection, 'app_host_data')
+
 
     def add_field_2(self, name, value):
         connection = self.get_connection()
@@ -65,6 +65,7 @@ class PersistentData(object):
         cursor.execute(the_sql)
         self.db_names_1 = get_fields(connection, 'app_data')
 
+
     def get(self, key_1, key_2 = None, name = None, date_string = None):
         if key_2:
             key = str(key_1) + str(key_2)
@@ -79,14 +80,14 @@ class PersistentData(object):
         if key_2:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
-                cursor.execute('select {} from app_host_data where key_1=?, key_2=?, date_string=?'.foramt(name),
-                               (key_1, key_2, date_string or '',))
+                cursor.execute('select {} from app_host_data where key_1=? and key_2=? and date(date_string) >= date(?) limit 1 order date(date_string)'.foramt(name),
+                               (key_1, key_2, date_string or '2015-01-01',))
             value = cursor.fetchone()
         else:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
-                cursor.execute('select {} from app_data where key_1=?, date_string=?'.foramt(name),
-                               (key_1, date_string or '',))
+                cursor.execute('select {} from app_data where key_1=? and date(date_string) >= date(?) limit 1 order date(date_string)'.foramt(name),
+                               (key_1, date_string or '2015-01-01',))
             value = cursor.fetchone()
         if value is None:
             raise KeyError(key)
