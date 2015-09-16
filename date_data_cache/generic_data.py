@@ -80,13 +80,13 @@ class PersistentData(object):
         if key_2:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
-                cursor.execute('select {} from app_host_data where key_1=? and key_2=? and date(date_string) >= date(?) limit 1 order date(date_string)'.foramt(name),
+                cursor.execute('select {} from app_host_data where key_1=? and key_2=? and date(date_string) >= date(?) limit 1 order date(date_string)'.format(name),
                                (key_1, key_2, date_string or '2015-01-01',))
             value = cursor.fetchone()
         else:
             with self.get_connection() as connection:
                 cursor = connection.cursor()
-                cursor.execute('select {} from app_data where key_1=? and date(date_string) >= date(?) limit 1 order date(date_string)'.foramt(name),
+                cursor.execute('select {} from app_data where key_1=? and date(date_string) >= date(?) limit 1 order date(date_string)'.format(name),
                                (key_1, date_string or '2015-01-01',))
             value = cursor.fetchone()
         if value is None:
