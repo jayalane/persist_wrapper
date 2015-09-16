@@ -1,0 +1,43 @@
+
+
+# General file ignores
+
+.DS_Store
+*~
+._*
+.\#*
+\#*\#
+
+# Begin Generic Python Ignores
+
+*.py[co]
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+develop-eggs
+.installed.cfg
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+
+# Sphinx doc tool intermediate files
+_build
+
+# IntelliJ (PyCharm)
+.idea
+
+# Vim
+*.swp
+
+# pid file
+*.pid
