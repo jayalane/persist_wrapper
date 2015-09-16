@@ -9,8 +9,7 @@ import collections
 
 import threading
 
-_MAP_OF_CONNECTIONS_1_KEY = {}
-_MAP_OF_CONNECTIONS_2_KEYS = {}
+_MAP_OF_CONNECTIONS_KEY = {}
 
 def get_data_type_name(value):
     if isinstance(value, (int, long, float, complex)):
@@ -34,34 +33,36 @@ def get_fields(connection, tb_name):
     
 
 class PersistentData(object):
-    def __init__(self, dbpath_1, dbpath_2):
-        self.dbpath_1 = dbpath_1
-        self.dbpath_2 = dbpath_2
+    def __init__(self, name):
+        self.dbpath = "data_" + name + ".sql"
         self.mem_dict = collections.defaultdict(lambda: collections.defaultdict(str))
-        connection = self.get_connection_1()
+        connection = self.get_connection()
         cursor = connection.cursor()
         cursor.execute('create table if not exists app_data '
                        '(key_1 text not null, date_string text, primary key (key_1, date_string))')
         self.db_names_1 = get_fields(connection, 'app_data')
 
-        connection = self.get_connection_2()
         cursor = connection.cursor()
         cursor.execute('create table if not exists app_host_data '
                        '(key_1 text not null, key_2 text not null, date_string text, primary key (key_1, key_2, date_string))')
         self.db_names_2 = get_fields(connection, 'app_host_data')
 
     def add_field_2(self, name, value):
-        connection = self.get_connection_2()
+        connection = self.get_connection()
         cursor = connection.cursor()
         type_name = get_data_type_name(value)
-        cursor.execute('alter table app_host_data add column {} {}'.format(name, type_name))
-        self.db_names_2 = get_fields(connection, 'app_data')
+        the_sql = 'alter table app_host_data add column {} {}'.format(name, type_name)
+        print the_sql
+        cursor.execute(the_sql)
+        self.db_names_2 = get_fields(connection, 'app_host_data')
 
     def add_field_1(self, name, value):
-        connection = self.get_connection_1()
+        connection = self.get_connection()
         cursor = connection.cursor()
         type_name = get_data_type_name(value)
-        cursor.execute('alter table app_data add column {} {}'.format(name, type_name))
+        the_sql = 'alter table app_data add column {} {}'.format(name, type_name)
+        print the_sql
+        cursor.execute(the_sql)
         self.db_names_1 = get_fields(connection, 'app_data')
 
     def get(self, key_1, key_2 = None, name = None, date_string = None):
@@ -76,13 +77,13 @@ class PersistentData(object):
         if key in self.mem_dict:
             return self.mem_dict[key][name]
         if key_2:
-            with self.get_connection_2() as connection:
+            with self.get_connection() as connection:
                 cursor = connection.cursor()
                 cursor.execute('select {} from app_host_data where key_1=?, key_2=?, date_string=?'.foramt(name),
                                (key_1, key_2, date_string or '',))
             value = cursor.fetchone()
         else:
-            with self.get_connection_1() as connection:
+            with self.get_connection() as connection:
                 cursor = connection.cursor()
                 cursor.execute('select {} from app_data where key_1=?, date_string=?'.foramt(name),
                                (key_1, date_string or '',))
@@ -92,22 +93,13 @@ class PersistentData(object):
         self.mem_dict[key][name] = value[0]
         return self.mem_dict[key][name]
 
-    def get_connection_1(self):
-        key = self.dbpath_1 + str(threading._get_ident())
-        if key in _MAP_OF_CONNECTIONS_1_KEY:
-            return _MAP_OF_CONNECTIONS_1_KEY[key]
-        conn = sqlite3.connect(self.dbpath_1)
-        print "Trying to open", self.dbpath_1
-        _MAP_OF_CONNECTIONS_1_KEY[key] = conn
-        return conn
-
-    def get_connection_2(self):
-        key = self.dbpath_2 + str(threading._get_ident())
-        if key in _MAP_OF_CONNECTIONS_2_KEYS:
-            return _MAP_OF_CONNECTIONS_2_KEYS[key]
-        conn = sqlite3.connect(self.dbpath_2)
-        print "Trying to open", self.dbpath_2
-        _MAP_OF_CONNECTIONS_2_KEYS[key] = conn
+    def get_connection(self):
+        key = self.dbpath + str(threading._get_ident())
+        if key in _MAP_OF_CONNECTIONS_KEY:
+            return _MAP_OF_CONNECTIONS_KEY[key]
+        conn = sqlite3.connect(self.dbpath)
+        print "Trying to open", self.dbpath
+        _MAP_OF_CONNECTIONS_KEY[key] = conn
         return conn
 
     def set(self, key_1, key_2 = None, name = None, value = None, date_string = None):
@@ -125,13 +117,12 @@ class PersistentData(object):
             if old_value == o_value:
                 return
         self.mem_dict[key][name] = o_value
-        if key_2:
-            with self.get_connection_2() as connection:
+        with self.get_connection() as connection:
+            if key_2:
                 cursor = connection.cursor()
                 cursor.execute('insert or replace into app_host_data (key_1, key_2, date_string, {0}) values (?, ?, ?, ?)'.format(name),
                                (key_1, key_2, date_string or '', value))
-        else:
-            with self.get_connection_1() as connection:
+            else:
                 cursor = connection.cursor()
                 cursor.execute('insert or replace into app_data (key_1, date_string, {0}) values (?, ?, ? )'.format(name),
                                (key_1, date_string or '', value))
@@ -139,7 +130,7 @@ class PersistentData(object):
 
 
 if __name__ == '__main__':
-    a = PersistentData('store_1', 'store_2')
+    a = PersistentData('store_1')
     a.set("fooserv", "vnccloud30b", "memory", 343043, '2015-7-15')
     print a.get("fooserv", "vnccloud30b", "memory", '2015-7-15')
     a.set("fooserv", None, "version", 1343434.5, '2015-7-15')
