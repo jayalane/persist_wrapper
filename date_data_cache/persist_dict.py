@@ -114,6 +114,19 @@ class PersistentDict(MutableMapping):
         for r in records:
             yield r[0]
 
+    def iter_for_likes(self, likes):
+        sql = ['select key from memo where ']
+        for l in likes:
+            sql.append("key like \'%" + l + "%\'")
+        sql = "".join(sql)
+        with self.get_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(sql)
+            records = cursor.fetchall()
+        for r in records:
+            yield r[0]
+
+
     def __len__(self):
         with self.get_connection() as connection:
             cursor = connection.cursor()
