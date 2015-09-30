@@ -15,7 +15,8 @@ def memo(method):
 
     @wraps(method)
     def memoized(*args, **kw):
-        str_args = method.__name__ + '-' + '-'.join(args) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
+        args2 = [str(v) for v in args]
+        str_args = method.__name__ + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
         try:
         # try to get the cached result
             res = stored_results[str_args]
