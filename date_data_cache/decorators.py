@@ -8,29 +8,31 @@ import pprint
 from functools import wraps
 
 
-def memo(method, check_func=None):
-    """This is fairly generic for non-class functions"""
-    name = "memo_" + method.__name__
-    stored_results = persist_dict.PersistentDict('./' + name + '.sqlite')
+def memo(check_func=None):
+    """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
+    def inner_memo(method):
+        name = "memo_" + method.__name__
+        stored_results = persist_dict.PersistentDict('./' + name + '.sqlite')
 
-    @wraps(method)
-    def memoized(*args, **kw):
-        args2 = [str(v) for v in args]
-        str_args = method.__name__ + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
-        try:
-        # try to get the cached result
-            res = stored_results[str_args]
-            # dangerous
-            if check_func:
-                if check_func(res, str_args):
-                    raise KeyError('synthetic')
-            return res
-        except KeyError:
-        # nothing was cached for those args. let's fix that.
-            result = stored_results[str_args] = method(*args, **kw)
-        return result
+        @wraps(method)
+        def memoized(*args, **kw):
+            args2 = [str(v) for v in args]
+            str_args = method.__name__ + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
+            try:
+            # try to get the cached result
+                res = stored_results[str_args]
+                # dangerous
+                if check_func:
+                    if check_func(res, str_args):
+                        raise KeyError('synthetic')
+                return res
+            except KeyError:
+            # nothing was cached for those args. let's fix that.
+                result = stored_results[str_args] = method(*args, **kw)
+            return result
 
-    return memoized
+        return memoized
+    return inner_memo
 
 
 def memo_self_with_dates(method):
