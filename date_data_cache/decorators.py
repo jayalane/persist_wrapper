@@ -8,7 +8,7 @@ import pprint
 from functools import wraps
 
 
-def memo(method):
+def memo(method, check_func=None):
     """This is fairly generic for non-class functions"""
     name = "memo_" + method.__name__
     stored_results = persist_dict.PersistentDict('./' + name + '.sqlite')
@@ -21,8 +21,9 @@ def memo(method):
         # try to get the cached result
             res = stored_results[str_args]
             # dangerous
-            if "<Response [404]>" in str(res):
-                raise KeyError('synthetic')
+            if check_func:
+                if check_func(res, str_args):
+                    raise KeyError('synthetic')
             return res
         except KeyError:
         # nothing was cached for those args. let's fix that.
