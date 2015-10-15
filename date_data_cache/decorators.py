@@ -30,7 +30,7 @@ def memo(check_func=None):
             # nothing was cached for those args. let's fix that.
                 result = stored_results[str_args] = method(*args, **kw)
             return result
-
+        memoized.persist_dict = stored_results
         return memoized
     return inner_memo
 

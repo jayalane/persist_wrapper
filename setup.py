@@ -13,7 +13,7 @@ AUTHOR_EMAIL = 'chris@lane-jayasinha.com'
 URL = 'https://github.com/lanstin/persist-wrapper'
 
 if __name__ == '__main__':
-    VERSION = "0.0.13"
+    VERSION = "0.0.14"
     setup(name=NAME,
           version=VERSION,
           description="Utility to cache date-based data",
