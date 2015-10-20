@@ -41,7 +41,8 @@ def memo_self_with_dates(method):
 
     @wraps(method)
     def memoized(*args):
-        str_args = method.__name__ + '-' + str(args[0].month) + '-' + str(args[0].day)  + '-' + str(args[0].year) + '-' + '-'.join(args[1:])
+        args2 = [strv(v) for v in args]
+        str_args = method.__name__ + '-' + str(args[0].month) + '-' + str(args[0].day)  + '-' + str(args[0].year) + '-' + '-'.join(args2)
         try:
         # try to get the cached result
             return stored_results[str_args]
