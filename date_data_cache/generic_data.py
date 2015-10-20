@@ -79,8 +79,8 @@ class PersistentData(object):
             key = str(key_1)
             if name not in self.db_names_1:
                 raise KeyError('field {} not in db'.format(name))
-#       if key in self.mem_dict:
-#            return self.mem_dict[key][name]
+        if key in self.mem_dict:
+            return self.mem_dict[key][name]
         value = None
         with self.get_connection() as connection:
             cursor = connection.cursor()
