@@ -122,6 +122,8 @@ class PersistentDict(MutableMapping):
         sql = ['select key from memo']
         if likes:
             sql[0] = sql[0] + " where"
+        if isinstance(likes, basestring):
+            likes = [likes]
         for l in likes:
             sql.append(" key like \'%" + l + "%\' and")
         sql = "".join(sql)
