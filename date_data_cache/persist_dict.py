@@ -133,8 +133,11 @@ class PersistentDict(MutableMapping):
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(sql + ";")
-            record = cursor.fetchone()
-            yield record[0]
+            record = True
+            while record:
+                record = cursor.fetchone()
+                if record:
+                    yield record
 
 
     def __len__(self):
