@@ -25,6 +25,7 @@ class PersistentDict(MutableMapping):
                            '(key blob primary key not null, value blob not null)')
         if iterable is not None:
             self.update(iterable)
+        self.mem_cache = mem_cache
         if mem_cache:
             self.mem_dict = cache.LRUCache(maxlen=1000000)
             self.mem_dict = {}
