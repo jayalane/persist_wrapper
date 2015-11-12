@@ -17,7 +17,7 @@ _MAP_OF_CONNECTIONS = {}
 
 
 class PersistentDict(MutableMapping):
-    def __init__(self, dbpath, iterable=None, **kwargs):
+    def __init__(self, dbpath, iterable=None, mem_cache=True, **kwargs):
         self.dbpath = dbpath
         with self.get_connection() as connection:
             cursor = connection.cursor()
@@ -25,8 +25,9 @@ class PersistentDict(MutableMapping):
                            '(key blob primary key not null, value blob not null)')
         if iterable is not None:
             self.update(iterable)
-        self.mem_dict = cache.LRUCache(maxlen=1000000)
-        self.mem_dict = {}
+        if mem_cache:
+            self.mem_dict = cache.LRUCache(maxlen=1000000)
+            self.mem_dict = {}
         self.update(kwargs)
 
     def encode(self, obj):
@@ -64,7 +65,7 @@ class PersistentDict(MutableMapping):
 
     def __getitem__(self, key):
         key = str(key)
-        if key in self.mem_dict:
+        if self.mem_cache and key in self.mem_dict:
             return self.mem_dict[key]
         with self.get_connection() as connection:
             cursor = connection.cursor()
@@ -74,18 +75,20 @@ class PersistentDict(MutableMapping):
         if value is None:
             raise KeyError(key)
 #       print 'returning ' + str(self.decode(value[0])) + ' for ' + key
-        self.mem_dict[key] = self.decode(value[0])
-        return self.mem_dict[key]
+        if self.mem_cache:
+            self.mem_dict[key] = self.decode(value[0])
+            return self.mem_dict[key]
+        return self.decode(value[0])
 
     def __setitem__(self, key, value):
         key = str(key)   # my keys are strings
         o_value = value
         value = self.encode(value)
-        if key in self.mem_dict:
+        if self.mem_cache and key in self.mem_dict:
             old_value = self.mem_dict[key]
             if old_value == o_value:
                 return
-        self.mem_dict[key] = o_value
+            self.mem_dict[key] = o_value
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute('insert or replace into memo values (?, ?)',
@@ -93,7 +96,7 @@ class PersistentDict(MutableMapping):
 
     def __delitem__(self, key):
         key = self.encode(key)
-        if key in self.mem_dict:
+        if self.mem_cache and key in self.mem_dict:
             del self.mem_dict[key]
         with self.get_connection() as connection:
             cursor = connection.cursor()
@@ -139,5 +142,6 @@ class PersistentDict(MutableMapping):
 
     def compress(self, key):
         v = self.__getitem__(key)
-        del self.mem_dict[key]
+        if self.mem_cache:
+            del self.mem_dict[key]
         self.__setitem__(key, v)
