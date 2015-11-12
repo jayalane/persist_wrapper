@@ -8,11 +8,11 @@ import pprint
 from functools import wraps
 
 
-def memo(check_func=None):
+def memo(check_func=None, mem_cache=True):
     """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
     def inner_memo(method):
         name = "memo_" + method.__name__
-        stored_results = persist_dict.PersistentDict('./' + name + '.sqlite')
+        stored_results = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
 
         @wraps(method)
         def memoized(*args, **kw):
@@ -35,24 +35,24 @@ def memo(check_func=None):
     return inner_memo
 
 
-def memo_self_with_dates(method):
+def memo_self_with_dates(mem_cache=True):
     """This is not generic - it assumes a class with a month and day members"""
     stored_results = persist_dict.PersistentDict('./memo_special.sqlite')
+    def inner_memo(method):
+        @wraps(method)
+        def memoized(*args):
+            args2 = [str(v) for v in args[1:]]  # meant for objects but want to skip self
+            str_args = method.__name__ + '-' + str(args[0].month) + '-' + str(args[0].day)  + '-' + str(args[0].year) + '-' + '-'.join(args2)
+            try:
+            # try to get the cached result
+                return stored_results[str_args]
+            except KeyError:
+            # nothing was cached for those args. let's fix that.
+                result = stored_results[str_args] = method(*args)
+            return result
 
-    @wraps(method)
-    def memoized(*args):
-        args2 = [str(v) for v in args[1:]]  # meant for objects but want to skip self
-        str_args = method.__name__ + '-' + str(args[0].month) + '-' + str(args[0].day)  + '-' + str(args[0].year) + '-' + '-'.join(args2)
-        try:
-        # try to get the cached result
-            return stored_results[str_args]
-        except KeyError:
-        # nothing was cached for those args. let's fix that.
-            result = stored_results[str_args] = method(*args)
-        return result
-
-    return memoized
-
+        return memoized
+    return inner_memo
 
 def timeit(method):
     """ TODO make this just save the data and provide a function to
