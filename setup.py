@@ -10,10 +10,10 @@ from setuptools import setup, find_packages
 NAME = 'persist-wrapper'
 AUTHOR = 'Chris Lane'
 AUTHOR_EMAIL = 'chris@lane-jayasinha.com'
-URL = 'https://github.com/lanstin/persist-wrapper'
+URL = 'https://github.com/jayalane/persist_wrapper'
 
 if __name__ == '__main__':
-    VERSION = "0.0.25"
+    VERSION = "0.0.26"
     setup(name=NAME,
           version=VERSION,
           description="Utility to cache date-based data",
