@@ -116,6 +116,7 @@ class PersistentDict(MutableMapping):
             cursor.execute('select key from memo')
             record = True
         while record:
+            del record
             record = cursor.fetchone()
             if record:
                 yield record

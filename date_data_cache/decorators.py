@@ -63,8 +63,8 @@ def timeit(method):
         result = method(*args, **kw)
         te = time.time()
 
-        print '%r %2.2f sec' % \
-              (method.__name__, te - ts)
+        print '%r %2.2f msec' % \
+              (method.__name__, (te - ts) * 1000.0)
         return result
 
     return timed
