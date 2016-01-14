@@ -19,7 +19,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
 
         @wraps(method)
         def memoized(*args, **kw):
-        """The wrapper function for the decorated thing"""
+            """The wrapper function for the decorated thing"""
             try:
             # try to get the cached result
                 str_args = make_str_key(method.__name__, args, kw)
