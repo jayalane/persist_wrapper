@@ -7,8 +7,11 @@ import persist_dict
 import pprint
 from functools import wraps
 
+def make_str_key(name, *args, **kw):
+    args2 = [str(v) for v in args]
+    return name + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
 
-def memo(check_func=None, mem_cache=True):
+def memo(check_func=None, mem_cache=True, cache_none=True):
     """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
     def inner_memo(method):
         name = "memo_" + method.__name__
@@ -16,11 +19,12 @@ def memo(check_func=None, mem_cache=True):
 
         @wraps(method)
         def memoized(*args, **kw):
-            args2 = [str(v) for v in args]
-            str_args = method.__name__ + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
             try:
             # try to get the cached result
+                str_args = make_str_key(method.__name__, args, kw)
                 res = stored_results[str_args]
+                if not cache_none and not res:
+                        raise KeyError('synthetic')
                 # dangerous
                 if check_func:
                     if check_func(res, str_args):
@@ -31,6 +35,11 @@ def memo(check_func=None, mem_cache=True):
                 result = stored_results[str_args] = method(*args, **kw)
             return result
         memoized.persist_dict = stored_results
+        def add_res_as_key(res, *args, **kw):
+            """To allow two different URLs be keys for same data"""
+             str_args = make_str_key(method.__name__, args, kw)
+            stored_results[str_agrs] = res
+        memoized.also_use_key = add_res_as_key
         return memoized
     return inner_memo
 
