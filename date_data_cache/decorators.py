@@ -19,6 +19,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
 
         @wraps(method)
         def memoized(*args, **kw):
+        """The wrapper function for the decorated thing"""
             try:
             # try to get the cached result
                 str_args = make_str_key(method.__name__, args, kw)
@@ -34,11 +35,11 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
             # nothing was cached for those args. let's fix that.
                 result = stored_results[str_args] = method(*args, **kw)
             return result
-        memoized.persist_dict = stored_results
+        memoized.persist_dict = stored_results  # allow caller to have access
         def add_res_as_key(res, *args, **kw):
             """To allow two different URLs be keys for same data"""
             str_args = make_str_key(method.__name__, args, kw)
-            stored_results[str_agrs] = res
+            stored_results[str_args] = res
         memoized.also_use_key = add_res_as_key
         return memoized
     return inner_memo
