@@ -37,7 +37,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
         memoized.persist_dict = stored_results
         def add_res_as_key(res, *args, **kw):
             """To allow two different URLs be keys for same data"""
-             str_args = make_str_key(method.__name__, args, kw)
+            str_args = make_str_key(method.__name__, args, kw)
             stored_results[str_agrs] = res
         memoized.also_use_key = add_res_as_key
         return memoized
