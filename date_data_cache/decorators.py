@@ -7,7 +7,7 @@ import persist_dict
 import pprint
 from functools import wraps
 
-def make_str_key(name, *args, **kw):
+def make_str_key(name, args, kw):
     args2 = [str(v) for v in args]
     return name + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
 
