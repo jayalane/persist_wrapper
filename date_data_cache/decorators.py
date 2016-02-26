@@ -31,7 +31,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                     if check_func(res, str_args):
                         raise KeyError('synthetic')
                 return res
-            except KeyError:
+            except (KeyError, OperationalError):
             # nothing was cached for those args. let's fix that.
                 result = stored_results[str_args] = method(*args, **kw)
             return result
