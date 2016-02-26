@@ -7,6 +7,8 @@ import persist_dict
 import pprint
 from functools import wraps
 
+import sqlite3
+
 def make_str_key(name, args, kw):
     args2 = [str(v) for v in args]
     return name + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
@@ -31,7 +33,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                     if check_func(res, str_args):
                         raise KeyError('synthetic')
                 return res
-            except (KeyError, OperationalError):
+            except (KeyError, sqlite3.OperationalError):
             # nothing was cached for those args. let's fix that.
                 result = stored_results[str_args] = method(*args, **kw)
             return result
