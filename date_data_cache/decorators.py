@@ -34,7 +34,9 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                         raise KeyError('synthetic')
                 return res
             except (KeyError, sqlite3.OperationalError):
-            # nothing was cached for those args. let's fix that.
+                # need to kill the persistent dictionary
+                stored_results.get_connection().close()
+                stored_results = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
                 result = stored_results[str_args] = method(*args, **kw)
             return result
         memoized.persist_dict = stored_results  # allow caller to have access
