@@ -33,10 +33,12 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                     if check_func(res, str_args):
                         raise KeyError('synthetic')
                 return res
-            except (KeyError, sqlite3.OperationalError):
+            except (KeyError):
+                # redo not found
+                result = stored_results[0][str_args] = method(*args, **kw)
+            except (sqlite3.OperationalError):
                 # need to kill the persistent dictionary
-                stored_results[0].get_connection().close()
-                stored_results[0] = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
+                stored_results[0].close()  # kill the connection
                 result = stored_results[0][str_args] = method(*args, **kw)
             return result
         memoized.persist_dict = stored_results  # allow caller to have access

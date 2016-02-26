@@ -64,6 +64,12 @@ class PersistentDict(MutableMapping):
         _MAP_OF_CONNECTIONS[key] = conn
         return conn
 
+    def close(self):
+        key = self.dbpath + str(threading._get_ident())
+        if key in _MAP_OF_CONNECTIONS:
+            _MAP_OF_CONNECTIONS[key].close()
+            del _MAP_OF_CONNECTIONS[key]
+
     def __getitem__(self, key):
         key = str(key)
         if self.mem_cache and key in self.mem_dict:
