@@ -17,7 +17,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
     """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
     def inner_memo(method):
         name = "memo_" + method.__name__
-        stored_results = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
+        stored_results = [persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)]
 
         @wraps(method)
         def memoized(*args, **kw):
@@ -25,7 +25,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
             try:
             # try to get the cached result
                 str_args = make_str_key(method.__name__, args, kw)
-                res = stored_results[str_args]
+                res = stored_results[0][str_args]
                 if not cache_none and not res:
                         raise KeyError('synthetic')
                 # dangerous
@@ -35,15 +35,15 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                 return res
             except (KeyError, sqlite3.OperationalError):
                 # need to kill the persistent dictionary
-                stored_results.get_connection().close()
-                stored_results = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
-                result = stored_results[str_args] = method(*args, **kw)
+                stored_results[0].get_connection().close()
+                stored_results[0] = persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)
+                result = stored_results[0][str_args] = method(*args, **kw)
             return result
         memoized.persist_dict = stored_results  # allow caller to have access
         def add_res_as_key(res, *args, **kw):
             """To allow two different URLs be keys for same data"""
             str_args = make_str_key(method.__name__, args, kw)
-            stored_results[str_args] = res
+            stored_results[0][str_args] = res
         memoized.also_use_key = add_res_as_key
         return memoized
     return inner_memo
