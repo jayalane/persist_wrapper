@@ -17,7 +17,7 @@ _MAP_OF_CONNECTIONS = {}
 
 
 class PersistentDict(MutableMapping):
-    def __init__(self, dbpath, iterable=None, mem_cache=True, json_only=False**kwargs):
+    def __init__(self, dbpath, iterable=None, mem_cache=True, json_only=False, **kwargs):
         self.dbpath = dbpath
         with self.get_connection() as connection:
             cursor = connection.cursor()
