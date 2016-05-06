@@ -17,7 +17,7 @@ _MAP_OF_CONNECTIONS = {}
 
 
 class PersistentDict(MutableMapping):
-    def __init__(self, dbpath, iterable=None, mem_cache=True, **kwargs):
+    def __init__(self, dbpath, iterable=None, mem_cache=True, json_only=False**kwargs):
         self.dbpath = dbpath
         with self.get_connection() as connection:
             cursor = connection.cursor()
@@ -26,6 +26,7 @@ class PersistentDict(MutableMapping):
         if iterable is not None:
             self.update(iterable)
         self.mem_cache = mem_cache
+        self.json_only = json_only
         if mem_cache:
             self.mem_dict = cache.LRUCache(maxlen=1000000)
             self.mem_dict = {}
@@ -35,8 +36,12 @@ class PersistentDict(MutableMapping):
         try:
             rv = json.dumps(obj)
         except TypeError as e:
+            if self.json_only:
+                raise e
             rv = cPickle.dumps(obj)
         old_rv = rv
+        if self.json_only:
+            return rv
         try:
             rv = zlib.compress(rv)
         except:
