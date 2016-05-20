@@ -1,7 +1,8 @@
 #! /bin/env python
 
 """
-   Client for the Super-CAL reporting to get Jav info.
+   Uses the caching stuff to cache URLs called with requests
+   Not adding requests as formal requirement, it'll just fail 
 """
 
 import os
@@ -11,15 +12,10 @@ import datetime
 
 import requests
 import json
-from date_data_cache import decorators
+import decorators
 import collections
 
-class dummy(object):
-    pass
-
-cal_common = dummy
-
-cal_common.the_print_config = False
+_THE_PRINT_CONFIG = False
 
 # now some caching of the CAL reports
 
@@ -63,17 +59,17 @@ def should_not_cache(res, str_args):
     try:
         data = json.loads(res._content)
         if len(res._content) < 700:
-            if cal_common.the_print_config:
+            if _THE_PRINT_CONFIG:
                 print "No data, skipping cache if "
             if 'tsdb' in str_args:
-                if cal_common.the_print_config:
+                if _THE_PRINT_CONFIG:
                     print " from TSDB"
                 return True
             if datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(35):
-                if cal_common.the_print_config:
+                if _THE_PRINT_CONFIG:
                     print "recent"
                 return True
-        if cal_common.the_print_config:
+        if _THE_PRINT_CONFIG:
             print "len is", len(res._content)
     except Exception as e:
         print "Exception", repr(e)
@@ -85,13 +81,13 @@ def should_not_cache(res, str_args):
 def requests_get(url):
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    if cal_common.the_print_config:
+    if _THE_PRINT_CONFIG:
         print "Actually calling ", url
     r = requests.get(url, headers=headers)
-    if r and hasattr(r, 'status_code') and cal_common.the_print_config:
+    if r and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
         print "got", r.status_code, "for", url
     last_log = len(r._content)
-    if cal_common.the_print_config:
+    if _THE_PRINT_CONFIG:
         print "Len", last_log
     return r
 
