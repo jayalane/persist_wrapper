@@ -33,9 +33,9 @@ def get_fields(connection, tb_name, debug_sql = False):
     return fields
 
 class PersistentData(object):
-    def __init__(self, name, debug_sql = False):
+    def __init__(self, name, debug_sql = False, name_prefix=''):
         self.debug_sql = debug_sql
-        self.dbpath = "data_" + name + ".sql"
+        self.dbpath = name_prefix + "data_" + name + ".sql"
         self.mem_dict = collections.defaultdict(lambda: collections.defaultdict(str))
         connection = self.get_connection()
         cursor = connection.cursor()

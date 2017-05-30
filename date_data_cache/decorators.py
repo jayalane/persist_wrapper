@@ -9,6 +9,8 @@ from functools import wraps
 
 import sqlite3
 
+_DEFAULT_NAME_PREFIX = ''  # hack to let me run same code from same directory for 2 different systems
+
 def make_str_key(name, args, kw):
     args2 = [str(v) for v in args]
     return name + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
@@ -17,7 +19,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
     """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
     def inner_memo(method):
         name = "memo_" + method.__name__
-        stored_results = [persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache)]
+        stored_results = [persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache, name_prefix=_DEFAULT_NAME_PREFIX)]
 
         @wraps(method)
         def memoized(*args, **kw):
@@ -53,7 +55,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
 
 def memo_self_with_dates(mem_cache=True):
     """This is not generic - it assumes a class with a month and day members"""
-    stored_results = persist_dict.PersistentDict('./memo_special.sqlite')
+    stored_results = persist_dict.PersistentDict('./memo_special.sqlite', name_prefix=_DEFAULT_NAME_PREFIX)
     def inner_memo(method):
         @wraps(method)
         def memoized(*args):
