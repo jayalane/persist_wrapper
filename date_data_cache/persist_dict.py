@@ -17,8 +17,8 @@ _MAP_OF_CONNECTIONS = {}
 
 
 class PersistentDict(MutableMapping):
-    def __init__(self, dbpath, iterable=None, mem_cache=True, json_only=False, **kwargs):
-        self.dbpath = dbpath
+    def __init__(self, dbpath, iterable=None, mem_cache=True, json_only=False, name_prefix='', **kwargs):
+        self.dbpath = name_prefix + dbpath
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute('create table if not exists memo '
