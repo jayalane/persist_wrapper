@@ -51,10 +51,10 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
         memoized.also_use_key = add_res_as_key
         def run_sql_iter(sql, seq):
             """To loop thru looking for similar keys"""
-            results = stored_results[0].run_sql_iter('select key, value, url from memo_index')
+            results = stored_results[0].run_sql_iter(sql, seq)
             with row in results:
                 yield row
-        memoized.run_sql_iterm = run_sql_iter
+        memoized.run_sql_iter = run_sql_iter
         def check_args_cached(*args, **kw):
             """To allow two different URLs be keys for same data"""
             str_args = make_str_key(method.__name__, args, kw)
