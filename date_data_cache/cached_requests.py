@@ -91,16 +91,3 @@ def requests_get(url):
         print "Len", last_log
     return r
 
-def requests_get_wrap(url):
-    if 'calhadoop-vip-a' in url:
-        other_url = url.replace('vip-a', 'vip-b')
-    elif 'calhadoop-vip-b' in url:
-        other_url = url.replace('vip-b', 'vip-a')
-    if other_url in requests_get.persist_dict[0]:
-        res = requests_get(other_url)
-        requests_get.also_use_key(res, url)
-    else:
-        res = requests_get(url)
-        requests_get.also_use_key(res, other_url)
-    return res
-

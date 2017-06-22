@@ -49,6 +49,11 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
             str_args = make_str_key(method.__name__, args, kw)
             stored_results[0][str_args] = res
         memoized.also_use_key = add_res_as_key
+        def check_args_cached(*args, **kw):
+            """To allow two different URLs be keys for same data"""
+            str_args = make_str_key(method.__name__, args, kw)
+            return str_args in stored_results[0]
+        memoized.check_args_cached = check_args_cached
         return memoized
     return inner_memo
 
@@ -101,7 +106,7 @@ def retry(method):
                 done = True
             except Exception as inst:
                 traceback.print_stack()
-                print "Jira connection error, retrying"
+                print "Jira connection error, retrying", str(type(inst)), str(repr(inst))
                 time.sleep(45 + random.randint(0, 90))
                 counter += 1
                 if counter > 30:
