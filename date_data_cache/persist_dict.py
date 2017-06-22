@@ -86,10 +86,10 @@ class PersistentDict(MutableMapping):
             _MAP_OF_CONNECTIONS[key].close()
             del _MAP_OF_CONNECTIONS[key]
 
-    def run_sql_iter(self, sql):
+    def run_sql_iter(self, sql, seq):
         with self.get_connection() as connection:
             cursor = connection.cursor()
-            cursor.execute(sql + ";")
+            cursor.execute(sql + ";", seq)
             records = cursor.fetchall()
             for record in records:
                 yield record

@@ -49,9 +49,8 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
             str_args = make_str_key(method.__name__, args, kw)
             stored_results[0][str_args] = res
         memoized.also_use_key = add_res_as_key
-        def run_sql_iter(sql):
+        def run_sql_iter(sql, seq):
             """To loop thru looking for similar keys"""
-            str_args = make_str_key(method.__name__, args, kw)
             results = stored_results[0].run_sql_iter('select key, value, url from memo_index')
             with row in results:
                 yield row
