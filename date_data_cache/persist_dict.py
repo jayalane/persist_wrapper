@@ -13,6 +13,17 @@ import zlib
 import threading
 import cache
 
+try:
+    import gevent
+except:
+    class dummy_gevent(object):
+        _THE_ONE = object()
+        @static_method
+        def getcurrent():
+            return _THE_ONE
+        
+    gevent = dummy_gevent()
+
 _MAP_OF_CONNECTIONS = {}
 
 
@@ -61,7 +72,7 @@ class PersistentDict(MutableMapping):
         return rv
 
     def get_connection(self):
-        key = self.dbpath + str(threading._get_ident())
+        key = self.dbpath + str(threading._get_ident()) + str(id(gevent.getcurrent()))
         if key in _MAP_OF_CONNECTIONS:
             return _MAP_OF_CONNECTIONS[key]
         conn = sqlite3.connect(self.dbpath)
@@ -70,10 +81,18 @@ class PersistentDict(MutableMapping):
         return conn
 
     def close(self):
-        key = self.dbpath + str(threading._get_ident())
+        key = self.dbpath + str(threading._get_ident()) + str(id(gevent.getcurrent()))
         if key in _MAP_OF_CONNECTIONS:
             _MAP_OF_CONNECTIONS[key].close()
             del _MAP_OF_CONNECTIONS[key]
+
+    def run_sql_iter(self, sql):
+        with self.get_connection() as connection:
+            cursor = connection.cursor()
+            cursor.execute(sql + ";")
+            records = cursor.fetchall()
+            for record in records:
+                yield record
 
     def __getitem__(self, key):
         key = str(key)
@@ -122,6 +141,7 @@ class PersistentDict(MutableMapping):
                 (key,))
 
     def __iter__(self):
+        """HOLDS connection - bad for web site"""
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute('select key from memo')
@@ -147,11 +167,9 @@ class PersistentDict(MutableMapping):
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(sql + ";")
-            record = True
-            while record:
-                record = cursor.fetchone()
-                if record:
-                    yield record
+            records= cursos.fetchall()
+            for record in records:
+                yield record
 
 
     def __len__(self):
