@@ -18,9 +18,10 @@ try:
 except:
     class dummy_gevent(object):
         _THE_ONE = object()
-        @static_method
-        def getcurrent():
-            return _THE_ONE
+
+        @classmethod
+        def getcurrent(cls_obj):
+            return cls_obj._THE_ONE
         
     gevent = dummy_gevent()
 
@@ -93,6 +94,8 @@ class PersistentDict(MutableMapping):
             records = cursor.fetchall()
             for record in records:
                 yield record
+        cursor = None
+        connection = None
 
     def __getitem__(self, key):
         key = str(key)
