@@ -27,7 +27,7 @@ def unix_time_millis(dt):
     return int((dt - _EPOCH).total_seconds() * 1000.0)
 
 
-def sherlock_start_end_time_string_from_date_time(m, d, y, hour = None):
+def sherlock_start_end_time_string_from_date_time(m, d, y, hour=None):
     if hour is None:
         dt1 = datetime.datetime(y, m, d, 0, 0)
         dt2 = dt1 + datetime.timedelta(1)
