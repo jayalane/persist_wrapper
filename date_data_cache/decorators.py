@@ -4,19 +4,23 @@ import time
 import traceback
 import random
 import persist_dict
-import pprint
+
 from functools import wraps
 
 import sqlite3
 
 _DEFAULT_NAME_PREFIX = ''  # hack to let me run same code from same directory for 2 different systems
 
+
 def make_str_key(name, args, kw):
     args2 = [str(v) for v in args]
     return name + '-' + '-'.join(args2) + '-' + '-'.join(["%s-%s" % (k, v) for k, v in kw.items()])
 
-def memo(check_func=None, mem_cache=True, cache_none=True):
-    """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args"""
+
+def memo(check_func=None, mem_cache=True, cache_none=True, max_age_seconds=None):
+    """This is fairly generic for non-class functions; check_func should return True to not cache; gets called with cached result & str_args
+       max_age_seconds if present limits age of cached data; mem_cache controls whether to keepy in memory also
+    """
     def inner_memo(method):
         name = "memo_" + method.__name__
         stored_results = [persist_dict.PersistentDict('./' + name + '.sqlite', mem_cache=mem_cache, name_prefix=_DEFAULT_NAME_PREFIX)]
@@ -25,9 +29,15 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
         def memoized(*args, **kw):
             """The wrapper function for the decorated thing"""
             try:
-            # try to get the cached result
+                # try to get the cached result
                 str_args = make_str_key(method.__name__, args, kw)
-                res = stored_results[0][str_args]
+                stored = res, age = stored_results[0][str_args]
+                if (isinstance(stored, tuple)):
+                    res, age = stored
+                else:
+                    res = stored   # backwards compatibility
+                if max_age_seconds and time.time() - age > max_age_seconds:
+                    raise KeyError('synthetic')
                 if not cache_none and not res:
                         raise KeyError('synthetic')
                 # dangerous
@@ -37,24 +47,27 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
                 return res
             except (KeyError):
                 # redo not found
-                result = stored_results[0][str_args] = method(*args, **kw)
+                result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
             except (sqlite3.OperationalError):
                 # need to kill the persistent dictionary
                 stored_results[0].close()  # kill the connection
-                result = stored_results[0][str_args] = method(*args, **kw)
+                result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
             return result
         memoized.persist_dict = stored_results  # allow caller to have access
+
         def add_res_as_key(res, *args, **kw):
             """To allow two different URLs be keys for same data"""
             str_args = make_str_key(method.__name__, args, kw)
-            stored_results[0][str_args] = res
+            stored_results[0][str_args] = (res, time.time())
         memoized.also_use_key = add_res_as_key
+
         def run_sql_iter(sql, seq):
             """To loop thru looking for similar keys"""
             results = stored_results[0].run_sql_iter(sql, seq)
-            with row in results:
+            for row in results:
                 yield row
         memoized.run_sql_iter = run_sql_iter
+
         def check_args_cached(*args, **kw):
             """To allow two different URLs be keys for same data"""
             str_args = make_str_key(method.__name__, args, kw)
@@ -67,21 +80,23 @@ def memo(check_func=None, mem_cache=True, cache_none=True):
 def memo_self_with_dates(mem_cache=True):
     """This is not generic - it assumes a class with a month and day members"""
     stored_results = persist_dict.PersistentDict('./memo_special.sqlite', name_prefix=_DEFAULT_NAME_PREFIX)
+
     def inner_memo(method):
         @wraps(method)
         def memoized(*args):
             args2 = [str(v) for v in args[1:]]  # meant for objects but want to skip self
             str_args = method.__name__ + '-' + str(args[0].month) + '-' + str(args[0].day)  + '-' + str(args[0].year) + '-' + '-'.join(args2)
             try:
-            # try to get the cached result
+                # try to get the cached result
                 return stored_results[str_args]
             except KeyError:
-            # nothing was cached for those args. let's fix that.
+                # nothing was cached for those args. let's fix that.
                 result = stored_results[str_args] = method(*args)
             return result
 
         return memoized
     return inner_memo
+
 
 def timeit(method):
     """ TODO make this just save the data and provide a function to
