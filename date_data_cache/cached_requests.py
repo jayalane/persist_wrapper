@@ -80,10 +80,10 @@ def should_not_cache(res, str_args):
 def process_throttled_urls():
     while 1:
         try:
-            url, d, m, y, event = _HADOOP_CALLS.pop()
+            url, event = _HADOOP_CALLS.pop()
             print url 
-            a = real_requests_get_wrap(url, d, m, y)
-            _HADOOP_ANSWERS[make_async_key(url, d, m, y)] = a
+            a = real_requests_get(url)
+            _HADOOP_ANSWERS[url] = a
             event.set()
         except IndexError:
             gevent.sleep(0.01)
@@ -94,7 +94,7 @@ _THROTTLED_GLET = None
 
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
-def requests_get(url, d, m, y):
+def requests_get(url):
     global _THROTTLED_GLET
     if _THROTTLED_GLET is None or _THROTTLED_GLET.ready():
         _THROTTLED_GLET = gevent.spawn(process_throttled_urls)
@@ -104,11 +104,11 @@ def requests_get(url, d, m, y):
         event.clear()
         if _THE_PRINT_CONFIG:
             print "Enqueueing call for", url, "len is", len(_THROTTLED_CALLS)
-        _THROTLLED_CALLS.append((url, d, m, y, event))
+        _THROTLLED_CALLS.append((url, event))
         event.wait(timeout=30.0)
         if _THE_PRINT_CONFIG:
             print "Dequeue call for", url
-        a = _THROTTLED_ANSWERS.get(make_async_key(url, d, m, y), None)
+        a = _THROTTLED_ANSWERS.get(url), None)
     return a
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
