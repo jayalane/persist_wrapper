@@ -76,9 +76,44 @@ def should_not_cache(res, str_args):
         pass
     return False
 
+
+def process_throttled_urls():
+    while 1:
+        try:
+            url, d, m, y, event = _HADOOP_CALLS.pop()
+            print url 
+            a = real_requests_get_wrap(url, d, m, y)
+            _HADOOP_ANSWERS[make_async_key(url, d, m, y)] = a
+            event.set()
+        except IndexError:
+            gevent.sleep(0.01)
+
+_THROTTLED_CALLS = []
+_THROTTLED_ANSWERS = {}
+_THROTTLED_GLET = None
+
+
+@decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
+def requests_get(url, d, m, y):
+    global _THROTTLED_GLET
+    if _THROTTLED_GLET is None or _THROTTLED_GLET.ready():
+        _THROTTLED_GLET = gevent.spawn(process_throttled_urls)
+    a = None
+    while not a:
+        event = gevent.event.Event()
+        event.clear()
+        if _THE_PRINT_CONFIG:
+            print "Enqueueing call for", url, "len is", len(_THROTTLED_CALLS)
+        _THROTLLED_CALLS.append((url, d, m, y, event))
+        event.wait(timeout=30.0)
+        if _THE_PRINT_CONFIG:
+            print "Dequeue call for", url
+        a = _THROTTLED_ANSWERS.get(make_async_key(url, d, m, y), None)
+    return a
+
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
 @decorators.retry
-def requests_get(url):
+def real_requests_get(url):
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
     if _THE_PRINT_CONFIG:
