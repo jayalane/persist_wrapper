@@ -48,6 +48,9 @@ def memo(check_func=None, mem_cache=True, cache_none=True, max_age_seconds=None)
             except (KeyError):
                 # redo not found
                 result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
+            except (ValueError):
+                # redo old format
+                result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
             except (sqlite3.OperationalError):
                 # need to kill the persistent dictionary
                 stored_results[0].close()  # kill the connection
