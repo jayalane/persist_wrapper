@@ -31,8 +31,9 @@ def memo(check_func=None, mem_cache=True, cache_none=True, max_age_seconds=None)
             try:
                 # try to get the cached result
                 str_args = make_str_key(method.__name__, args, kw)
-                stored = res, age = stored_results[0][str_args]
-                if (isinstance(stored, tuple)):
+                stored = stored_results[0][str_args]
+                # print  stored
+                if (isinstance(stored, tuple)) or (isinstance(stored, list) and len(stored) == 2):
                     res, age = stored
                 else:
                     res = stored   # backwards compatibility
@@ -48,13 +49,16 @@ def memo(check_func=None, mem_cache=True, cache_none=True, max_age_seconds=None)
             except (KeyError):
                 # redo not found
                 result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
+                #print "Key Error", stored_results[0][str_args]
             except (ValueError):
                 # redo old format
                 result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
+                #print "Value Error", stored_results[0][str_args]
             except (sqlite3.OperationalError):
                 # need to kill the persistent dictionary
                 stored_results[0].close()  # kill the connection
                 result, _ = stored_results[0][str_args] = (method(*args, **kw), time.time())
+                #print "Op Error", stored_results[0][str_args]
             return result
         memoized.persist_dict = stored_results  # allow caller to have access
 

@@ -15,7 +15,15 @@ import json
 import decorators
 import collections
 
+import gevent
+import gevent.event
+
 _THE_PRINT_CONFIG = False
+
+_THROTTLED_CALLS = []
+_THROTTLED_ANSWERS = {}
+_THROTTLED_GLET = None
+
 
 # now some caching of the CAL reports
 
@@ -80,17 +88,13 @@ def should_not_cache(res, str_args):
 def process_throttled_urls():
     while 1:
         try:
-            url, event = _HADOOP_CALLS.pop()
+            url, event = _THROTTLED_CALLS.pop()
             print url 
             a = real_requests_get(url)
-            _HADOOP_ANSWERS[url] = a
+            _THROTTLED_ANSWERS[url] = a
             event.set()
         except IndexError:
             gevent.sleep(0.01)
-
-_THROTTLED_CALLS = []
-_THROTTLED_ANSWERS = {}
-_THROTTLED_GLET = None
 
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
@@ -104,11 +108,11 @@ def requests_get(url):
         event.clear()
         if _THE_PRINT_CONFIG:
             print "Enqueueing call for", url, "len is", len(_THROTTLED_CALLS)
-        _THROTLLED_CALLS.append((url, event))
+        _THROTTLED_CALLS.append((url, event))
         event.wait(timeout=30.0)
         if _THE_PRINT_CONFIG:
             print "Dequeue call for", url
-        a = _THROTTLED_ANSWERS.get(url), None)
+        a = _THROTTLED_ANSWERS.get(url, None)
     return a
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
@@ -119,10 +123,14 @@ def real_requests_get(url):
     if _THE_PRINT_CONFIG:
         print "Actually calling ", url
     r = requests.get(url, headers=headers)
-    if r and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
+    if r is not None and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
         print "got", r.status_code, "for", url
+        if r.status_code > 399:
+            print r._content
     last_log = len(r._content)
     if _THE_PRINT_CONFIG:
         print "Len", last_log
     return r
 
+if __name__ == "__main__":
+    print requests_get("http://disputingtaste.com/").body
