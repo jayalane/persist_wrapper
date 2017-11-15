@@ -3,7 +3,8 @@
 import time
 import traceback
 import random
-import persist_dict
+
+from . import persist_dict
 
 from functools import wraps
 
@@ -39,7 +40,7 @@ def memo(check_func=None, mem_cache=True, cache_none=True, max_age_seconds=None)
                     res = stored   # backwards compatibility
                 if max_age_seconds and time.time() - age > max_age_seconds:
                     raise KeyError('synthetic')
-                if not cache_none and not res:
+                if not cache_none and res is None:  # 404 evals as False
                         raise KeyError('synthetic')
                 # dangerous
                 if check_func:
