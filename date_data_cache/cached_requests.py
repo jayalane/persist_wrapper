@@ -12,8 +12,9 @@ import datetime
 
 import requests
 import json
-import decorators
 import collections
+
+from . import decorators
 
 import gevent
 import gevent.event
@@ -73,7 +74,7 @@ def should_not_cache(res, str_args):
                 if _THE_PRINT_CONFIG:
                     print " from TSDB"
                 return True
-            if datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(35):
+            if datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(4):
                 if _THE_PRINT_CONFIG:
                     print "recent"
                 return True
