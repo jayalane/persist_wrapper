@@ -91,6 +91,7 @@ class PersistentDict(MutableMapping):
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(sql + ";", seq)
+            # print "iter over ", sql
             records = cursor.fetchall()
             for record in records:
                 yield record
@@ -108,7 +109,7 @@ class PersistentDict(MutableMapping):
             value = cursor.fetchone()
         if value is None:
             raise KeyError(key)
-#       print 'returning ' + str(self.decode(value[0])) + ' for ' + key
+        # print 'returning ' + str(self.decode(value[0])) + ' for ' + key
         if self.mem_cache:
             self.mem_dict[key] = self.decode(value[0])
             return self.mem_dict[key]
@@ -123,6 +124,7 @@ class PersistentDict(MutableMapping):
             if old_value == o_value:
                 return
             self.mem_dict[key] = o_value
+        # print 'setting ' + str(value) + ' for ' + key
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute('insert or replace into memo values (?, ?)',
@@ -166,12 +168,13 @@ class PersistentDict(MutableMapping):
         sql = "".join(sql)
         if likes:
             sql = sql[:-3]
-        print sql
+        # print sql
         with self.get_connection() as connection:
             cursor = connection.cursor()
             cursor.execute(sql + ";")
             records= cursos.fetchall()
             for record in records:
+                # print "yielding", record
                 yield record
 
 
