@@ -104,7 +104,7 @@ def requests_get(url):
     if _THROTTLED_GLET is None or _THROTTLED_GLET.ready():
         _THROTTLED_GLET = gevent.spawn(process_throttled_urls)
     a = None
-    while not a:
+    while a is None:
         event = gevent.event.Event()
         event.clear()
         if _THE_PRINT_CONFIG:
