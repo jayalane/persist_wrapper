@@ -90,7 +90,6 @@ def process_throttled_urls():
     while 1:
         try:
             url, event = _THROTTLED_CALLS.pop()
-            print url 
             a = real_requests_get(url)
             _THROTTLED_ANSWERS[url] = a
             event.set()
