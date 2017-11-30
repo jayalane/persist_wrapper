@@ -24,6 +24,7 @@ _THE_PRINT_CONFIG = False
 _THROTTLED_CALLS = []
 _THROTTLED_ANSWERS = {}
 _THROTTLED_GLET = None
+_THROTTLED_SLEEP = 0.1
 
 
 # now some caching of the CAL reports
@@ -93,6 +94,7 @@ def process_throttled_urls():
             a = real_requests_get(url)
             _THROTTLED_ANSWERS[url] = a
             event.set()
+            gevent.sleep(_THROTTLED_SLEEP)
         except IndexError:
             gevent.sleep(0.01)
 
