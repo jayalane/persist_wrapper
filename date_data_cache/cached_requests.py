@@ -22,6 +22,7 @@ import gevent.event
 _THE_PRINT_CONFIG = False
 
 _THROTTLED_CALLS = []
+_THROTTLED_CALLS_MAX_LEN_EXIT = 1000
 _THROTTLED_ANSWERS = {}
 _THROTTLED_GLET = None
 _THROTTLED_SLEEP = 0.1
@@ -61,11 +62,15 @@ def should_not_cache(res, str_args):
     # persist callback to see if we should use the cached value
     try:
         if '404' in repr(res) and \
-               datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(5):
+               datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(3):
             # use a 404 unless it's new
             return True
     except:
         pass
+    if '429' in repr(res):
+        if _THE_PRINT_CONFIG:
+            print "skipping 429"
+        return True
     try:
         data = json.loads(res._content)
         if len(res._content) < 700:
@@ -90,7 +95,7 @@ def should_not_cache(res, str_args):
 def process_throttled_urls():
     while 1:
         try:
-            url, event = _THROTTLED_CALLS.pop()
+            url, event = _THROTTLED_CALLS.pop(0)
             a = real_requests_get(url)
             _THROTTLED_ANSWERS[url] = a
             event.set()
@@ -110,25 +115,33 @@ def requests_get(url):
         event.clear()
         if _THE_PRINT_CONFIG:
             print "Enqueueing call for", url, "len is", len(_THROTTLED_CALLS)
+        if len(_THROTTLED_CALLS) > _THROTTLED_CALLS_MAX_LEN_EXIT:
+            os._exit(3)
         _THROTTLED_CALLS.append((url, event))
         event.wait(timeout=30.0)
         if _THE_PRINT_CONFIG:
             print "Dequeue call for", url
         a = _THROTTLED_ANSWERS.get(url, None)
+        if a:
+            del _THROTTLED_ANSWERS[url]
     return a
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
 @decorators.retry
 def real_requests_get(url):
+    global _THROTTLED_SLEEP
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    if _THE_PRINT_CONFIG:
-        print "Actually calling ", url
+    print "Actually calling ", url
     r = requests.get(url, headers=headers)
-    if r is not None and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
+    # if r is not None and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
+    if r is not None and hasattr(r, 'status_code'):
         print "got", r.status_code, "for", url
         if r.status_code > 399:
             print r._content
+    if r and hasattr(r, 'status_code') and r.status_code == 429:
+        gevent.sleep(30.0)
+        _THROTTLED_SLEEP = 2 * _THROTTLED_SLEEP
     last_log = len(r._content)
     if _THE_PRINT_CONFIG:
         print "Len", last_log
