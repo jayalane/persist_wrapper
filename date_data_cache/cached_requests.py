@@ -24,7 +24,8 @@ _THE_PRINT_CONFIG = False
 _THROTTLED_CALLS = []
 _THROTTLED_CALLS_MAX_LEN_EXIT = 1000
 _THROTTLED_ANSWERS = {}
-_THROTTLED_GLET = None
+_THROTTLED_GLET_LIST = []
+_NUM_SIMULTANEOUS = 2
 _THROTTLED_SLEEP = 0.1
 
 
@@ -103,12 +104,21 @@ def process_throttled_urls():
         except IndexError:
             gevent.sleep(0.01)
 
+def check_processes():
+    global _THROTTLED_GLET_LIST
+    if len(_THROTTLED_GLET_LIST) < _NUM_SIMULTANEOUS or any(list(filter(lambda x: x.ready(), _THROTTLED_GLET_LIST))):
+        while len(_THROTTLED_GLET_LIST) < _NUM_SIMULTANEOUS:
+            _THROTTLED_GLET_LIST.append(gevent.spawn(process_throttled_urls))
+        new_list = []
+        for g in _THROTTLED_GLET_LIST:
+            if g.ready():
+                new_list.append(gevent.spawn(process_throttled_urls))
+            else:
+                new_list.append(g)
 
 @decorators.memo(check_func=should_not_cache, mem_cache=False, cache_none=False)
 def requests_get(url):
-    global _THROTTLED_GLET
-    if _THROTTLED_GLET is None or _THROTTLED_GLET.ready():
-        _THROTTLED_GLET = gevent.spawn(process_throttled_urls)
+    check_processes()
     a = None
     while a is None:
         event = gevent.event.Event()
