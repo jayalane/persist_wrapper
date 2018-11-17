@@ -1,1 +1,1 @@
-python setup.py sdist upload -r pypi
+pypy setup.py sdist upload -r pypi

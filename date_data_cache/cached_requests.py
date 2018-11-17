@@ -63,7 +63,7 @@ def should_not_cache(res, str_args):
     # persist callback to see if we should use the cached value
     try:
         if '404' in repr(res) and \
-               datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(3):
+               datetime.datetimetoday() - date_from_cache(str_args) < datetime.timedelta(3):
             # use a 404 unless it's new
             return True
     except:
@@ -74,14 +74,14 @@ def should_not_cache(res, str_args):
         return True
     try:
         data = json.loads(res._content)
-        if len(res._content) < 700:
+        if ('cal' in str_agrs and len(res._content) < 700) or (len(res._content) < 300):
             if _THE_PRINT_CONFIG:
                 print "No data, skipping cache if "
             if 'tsdb' in str_args:
                 if _THE_PRINT_CONFIG:
                     print " from TSDB"
                 return True
-            if datetime.date.today() - date_from_cache(str_args) < datetime.timedelta(4):
+            if datetime.datetime.today() - date_from_cache(str_args) < datetime.timedelta(4):
                 if _THE_PRINT_CONFIG:
                     print "recent"
                 return True
