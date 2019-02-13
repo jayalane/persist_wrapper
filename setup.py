@@ -13,7 +13,7 @@ AUTHOR_EMAIL = 'chris@lane-jayasinha.com'
 URL = 'https://github.com/jayalane/persist_wrapper'
 
 if __name__ == '__main__':
-    VERSION = "0.0.62"
+    VERSION = "0.0.64"
     setup(name=NAME,
           version=VERSION,
           description="Utility to cache date-based data",
