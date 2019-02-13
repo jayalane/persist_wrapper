@@ -63,7 +63,7 @@ def should_not_cache(res, str_args):
     # persist callback to see if we should use the cached value
     try:
         if '404' in repr(res) and \
-               datetime.datetimetoday() - date_from_cache(str_args) < datetime.timedelta(3):
+               datetime.datetime.now() - date_from_cache(str_args) < datetime.timedelta(3):
             # use a 404 unless it's new
             return True
     except:
@@ -73,22 +73,22 @@ def should_not_cache(res, str_args):
             print "skipping 429"
         return True
     try:
-        data = json.loads(res._content)
-        if ('cal' in str_agrs and len(res._content) < 700) or (len(res._content) < 300):
+        if ('cal' in str_args and len(res._content) < 700) or (len(res._content) < 300):
             if _THE_PRINT_CONFIG:
                 print "No data, skipping cache if "
             if 'tsdb' in str_args:
                 if _THE_PRINT_CONFIG:
                     print " from TSDB"
                 return True
-            if datetime.datetime.today() - date_from_cache(str_args) < datetime.timedelta(4):
+            if datetime.datetime.now() - date_from_cache(str_args) < datetime.timedelta(4):
                 if _THE_PRINT_CONFIG:
                     print "recent"
                 return True
         if _THE_PRINT_CONFIG:
             print "len is", len(res._content)
     except Exception as e:
-        print "Exception", repr(e)
+        if _THE_PRINT_CONFIG:
+            print "Exception", repr(e)
         pass
     return False
 
@@ -142,13 +142,16 @@ def real_requests_get(url):
     global _THROTTLED_SLEEP
     headers = {'Content-Type': 'application/json',
                'Accept': 'application/json'}
-    print "Actually calling ", url
+    if _THE_PRINT_CONFIG:
+        print "Actually calling ", url
     r = requests.get(url, headers=headers)
     # if r is not None and hasattr(r, 'status_code') and _THE_PRINT_CONFIG:
     if r is not None and hasattr(r, 'status_code'):
-        print "got", r.status_code, "for", url
+        if _THE_PRINT_CONFIG:
+            print "got", r.status_code, "for", url
         if r.status_code > 399:
-            print r._content
+            if _THE_PRINT_CONFIG:
+                print r._content
     if r and hasattr(r, 'status_code') and r.status_code == 429:
         gevent.sleep(30.0)
         _THROTTLED_SLEEP = 2 * _THROTTLED_SLEEP
